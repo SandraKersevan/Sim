@@ -64,9 +64,9 @@ class Igra():
             return None #neveljavna poteza
         else:
             self.shrani_pozicijo()
-            print(self.preveri_trojke({i,j}))
-            if self.preveri_trojke({i,j}) == True:
-                self.gui.koncaj_igro()
+            (vrednost, k) = self.preveri_trojke({i,j})
+            if vrednost == True:
+                self.gui.koncaj_igro([{i,j},{j,k},{k,i}])
             else:
                 if self.na_potezi == IGRALEC_MODER: #dodamo potezo igralcu v seznam
                     self.moder.append({i, j})
@@ -95,13 +95,15 @@ class Igra():
             for k in self.gui.seznam_pik:
                 if ({i,k} in self.moder) and ({k,j} in self.moder):
                     vrednost = True
+                    break
                 else: vrednost = False
         else:
             for k in self.gui.seznam_pik:
                 if ({i,k} in self.rdec) and ({k,j} in self.rdec):
                     vrednost = True
+                    break
                 else: vrednost = False
-        return vrednost
+        return (vrednost, k)
 
 
 #################################################################################
@@ -214,6 +216,25 @@ class Gui():
 
     def koncaj_igro(self, sez):
         self.napis.set("Konec igre.")
+        if self.igra.na_potezi == IGRALEC_MODER:
+            barva = 'blue'
+        else: barva = 'red'
+        [crta_1, crta_2, crta_3] = sez
+        prve_koord_0, prve_koord_1 = list(crta_1)[0], list(crta_1)[1]
+        l1 = self.plosca.create_line(sredisce(self.plosca.coords(prve_koord_0))[0],sredisce(self.plosca.coords(prve_koord_0))[1],
+                                    sredisce(self.plosca.coords(prve_koord_1))[0],sredisce(self.plosca.coords(prve_koord_1))[1],
+                                    fill=barva, tag=Gui.TAG_CRTE, width = 10)
+        self.plosca.tag_lower(l1)
+        druge_koord_0, druge_koord_1 = list(crta_2)[0], list(crta_2)[1]
+        l2 = self.plosca.create_line(sredisce(self.plosca.coords(druge_koord_0))[0],sredisce(self.plosca.coords(druge_koord_0))[1],
+                                    sredisce(self.plosca.coords(druge_koord_1))[0],sredisce(self.plosca.coords(druge_koord_1))[1],
+                                    fill=barva, tag=Gui.TAG_CRTE, width = 10)
+        self.plosca.tag_lower(l2)
+        tretje_koord_0, tretje_koord_1 = list(crta_3)[0], list(crta_3)[1]
+        l3 = self.plosca.create_line(sredisce(self.plosca.coords(tretje_koord_0))[0],sredisce(self.plosca.coords(tretje_koord_0))[1],
+                                    sredisce(self.plosca.coords(tretje_koord_1))[0],sredisce(self.plosca.coords(tretje_koord_1))[1],
+                                    fill=barva, tag=Gui.TAG_CRTE, width = 10)
+        self.plosca.tag_lower(l3)
 
     def prekini_igralce(self):
         if self.igralec_moder: self.igralec_moder.prekini()
