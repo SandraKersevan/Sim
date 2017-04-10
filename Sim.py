@@ -21,13 +21,8 @@ class Igra():
     def __init__(self,gui):
         self.gui=gui
         self.na_potezi = IGRALEC_MODER
-        self.zgodovina = []
         self.moder = []
         self.rdec = []
-
-    def shrani_pozicijo(self):
-        #v zgodovino shranimo modre in rdece crte ter kdo je na potezi
-        self.zgodovina.append((self.moder, self.rdec, self.na_potezi))
 
     def kopija(self):
         #skopiramo celotno igro
@@ -38,8 +33,18 @@ class Igra():
         return kopija
 
     def razveljavi(self):
-        #iz zgodovine odstranimo zadnjo potezo
-        (self.moder, self.rdec, self.na_potezi) = self.zgodovina.pop()
+        #iz seznama igralca, ki je zadnji igral, odstranimo zadnjo potezo in spremenimo, kdo je na vrsti za igrati
+        if self.na_potezi == IGRALEC_MODER:
+            if self.rdec == []: pass
+            else:
+                self.rdec.pop()
+                self.na_potezi = nasprotnik(self.na_potezi)
+        elif self.na_potezi == IGRALEC_RDEC:
+            if self.moder == []: pass
+            else:
+                self.moder.pop()
+                self.na_potezi = nasprotnik(self.na_potezi)
+        else:pass
 
     def je_veljavna(self, p):
         #pogledamo, ce je poteza ze bila povlecena
@@ -48,7 +53,6 @@ class Igra():
         else:
             self.preveri_trojke(p)
             return True
-
 
     def veljavne_poteze(self):
         #pogledamo, katere poteze so se veljavne
@@ -63,7 +67,6 @@ class Igra():
         if (self.je_veljavna({i,j}) == False) or (self.na_potezi == None):
             return None #neveljavna poteza
         else:
-            self.shrani_pozicijo()
             (vrednost, k) = self.preveri_trojke({i,j})
             if vrednost == True:
                 self.gui.koncaj_igro([{i,j},{j,k},{k,i}])
@@ -74,7 +77,6 @@ class Igra():
                     self.rdec.append({i, j})
                 self.na_potezi = nasprotnik(self.na_potezi) #spremenimo, kdo je na potezi
                 return True
-            #TODO ce je konec
 
     def mozni_trikotniki(self):
         TRIKOTNIKI = []
@@ -167,6 +169,8 @@ class Gui():
         self.igra = None
         self.seznam_pik = []
         self.aktivne_pike = []
+        self.seznam_crt = []
+        self.stanje = 'normal'
         
         master.protocol("WM_DELETE_WINDOW", lambda: self.zapri_okno(master))
 
@@ -177,13 +181,20 @@ class Gui():
         # Podmenu za izbiro igre
         menu_igra = tk.Menu(menu)
         menu.add_cascade(label='Igra', menu=menu_igra)
-        menu_igra.add_command(label='Nova igra', command=self.zacni_igro)
-        menu_igra.add_command(label='Razveljavi', command=self.razveljavi)
+        menu_igra.add_command(label='Nova igra', command=lambda: self.zacni_igro(Clovek(self), Clovek(self), 'Na potezi je modri igralec.'))
+        menu_igra.add_command(label='Razveljavi', command=self.razveljavi, state=self.stanje)
         menu_igra.add_command(label='Navodila', command=self.navodila)
         menu_igra.add_command(label='Zapri', command=master.destroy)
 
+        menu_igralci = tk.Menu(menu)
+        menu.add_cascade(label='Igralci', menu=menu_igralci)
+        menu_igralci.add_command(label='Človek/Človek', command=lambda: self.zacni_igro(Clovek(self), Clovek(self), 'Na potezi je modri igralec.'))
+        menu_igralci.add_command(label='Človek/Računalnik', command=lambda: self.zacni_igro(Clovek(self), Racunalnik(self), 'Na potezi je modri igralec.'))
+        menu_igralci.add_command(label='Računalnik/Človek', command=lambda: self.zacni_igro(Racunalnik(self), Clovek(self), 'Na potezi je modri igralec.'))
+        menu_igralci.add_command(label='Računalnik/Računalnik', command=lambda: self.zacni_igro(Racunalnik(self), Racunalnik(self), 'Na potezi je modri igralec.'))
+        
         # Napis, ki prikazuje stanje igre
-        self.napis = tk.StringVar(master, value='Dobrodošli!')
+        self.napis = tk.StringVar(master, value='Dobrodošli! \n Na potezi je modri igralec.')
         tk.Label(master, textvariable=self.napis).grid(row=0, column=0)
 
         # Igralno območje
@@ -194,14 +205,16 @@ class Gui():
         self.plosca.bind("<Button-1>", self.pika_klik)
 
         # Prični igro
-        self.zacni_igro(Clovek(self), Clovek(self))
+        self.zacni_igro(Clovek(self), Clovek(self), 'Dobrodošli! \n Na potezi je modri igralec.')
         self.narisi_pike()
 
     def zapri_okno(self, master):
         self.prekini_igralce()
         master.destroy()
 
-    def zacni_igro(self, igralec_moder, igralec_rdec):
+    def zacni_igro(self, igralec_moder, igralec_rdec, napis):
+        self.stanje='normal'
+        self.napis.set(napis)
         self.plosca.delete(Gui.TAG_CRTE)
         self.barva = 'blue'
         self.prekini_igralce()
@@ -215,10 +228,21 @@ class Gui():
         self.igralec_moder.igraj()
 
     def koncaj_igro(self, sez):
-        self.napis.set("Konec igre.")
+        [crta_1, crta_2, crta_3] = sez
         if self.igra.na_potezi == IGRALEC_MODER:
             barva = 'blue'
-        else: barva = 'red'
+            vrednost = 'Konec igre. \n Zmagal je rdeč igralec.'
+            self.igra.moder.append(crta_1)
+        else:
+            barva = 'red'
+            vrednost = 'Konec igre. \n Zmagal je moder igralec.'
+            self.igra.rdec.append(crta_1)
+        self.narisi_trikotnik(sez, barva)
+        self.igra.na_potezi = None
+        self.napis.set(vrednost)
+        self.stanje='disabled'
+        
+    def narisi_trikotnik(self, sez, barva):
         [crta_1, crta_2, crta_3] = sez
         prve_koord_0, prve_koord_1 = list(crta_1)[0], list(crta_1)[1]
         l1 = self.plosca.create_line(sredisce(self.plosca.coords(prve_koord_0))[0],sredisce(self.plosca.coords(prve_koord_0))[1],
@@ -259,24 +283,34 @@ class Gui():
         l = self.plosca.create_line(sredisceX_1, sredisceY_1, sredisceX_2, sredisceY_2,
                                 fill=barva, tag=Gui.TAG_CRTE, width = 5)
         self.plosca.tag_lower(l)
-        self.igra.povleci(pika_1, pika_2)
+        self.seznam_crt.append(l)
  
     def razveljavi(self):
-        #TODO
-        pass
+        if self.stanje == 'disabled': pass
+        elif self.seznam_crt == []: pass
+        else:
+            self.igra.razveljavi()
+            self.plosca.delete(self.seznam_crt[-1])
+            self.seznam_crt.pop()
+            if self.igra.na_potezi == IGRALEC_MODER:
+                self.napis.set('Na potezi je modri igralec.')
+            elif self.igra.na_potezi == IGRALEC_RDEC:
+                self.napis.set('Na potezi je rdeč igralec.')
+            else: pass
 
     def navodila(self):
         window = tk.Toplevel(root)
-        string = 'To so navodila za igro'
-        #TODO
+        string = '''Na igralnem polju so narisane pike. Igralca izmenjajoč povezujeta
+pike s črtami, vsak s svojo barvo. Cilj igre je nasprotnika prisiliti,
+da s svojo barvo tri pike poveže v trikotnik. Ko se to zgodi, je igre
+konec in igralec s trikotnikom v svoji barvi je igro izgubil.'''
         tk.Label(window, text=string).pack()
 
     def pika_klik(self, event):
         if self.igra.na_potezi == IGRALEC_MODER:
             self.igralec_moder.klik(event)
         elif self.igra.na_potezi == IGRALEC_RDEC:
-            self.igralec_rdec.klik(event)
-        
+            self.igralec_rdec.klik(event)        
 
     def povleci_potezo(self, event):
         igralec = self.igra.na_potezi
@@ -295,9 +329,12 @@ class Gui():
             if self.igra.povleci(self.aktivne_pike[0],self.aktivne_pike[1]) == True:
                 if igralec == IGRALEC_MODER:
                     self.barva = 'blue'
+                    vrednost = 'Na potezi je rdeč igralec.'
                 else:
                     self.barva = 'red'
+                    vrednost = 'Na potezi je modri igralec.'
                 self.narisi_crto(self.barva)
+                self.napis.set(vrednost)
             else: pass
             for pika in self.aktivne_pike: 
                 self.plosca.itemconfig(pika, fill='black')
