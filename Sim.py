@@ -6,7 +6,8 @@ import math
 
 IGRALEC_MODER = 'M'
 IGRALEC_RDEC = 'R'
-PRAZNO = '_'
+NEODLOCENO = 'neodloceno'
+NI_KONEC = 'ni konec'
 
 def nasprotnik(igralec):
     """Vrni nasprotnika od igralca."""
@@ -23,6 +24,7 @@ class Igra():
         self.na_potezi = IGRALEC_MODER
         self.moder = []
         self.rdec = []
+        self.stanje_igre = NI_KONEC
 
     def kopija(self):
         #skopiramo celotno igro
@@ -30,6 +32,7 @@ class Igra():
         kopija.na_potezi = self.na_potezi
         kopija.moder = self.moder
         kopija.rdec = self.rdec
+        kopija.stanje_igre = self.stanje_igre
         return kopija
 
     def razveljavi(self):
@@ -65,12 +68,18 @@ class Igra():
 
     def povleci(self, i, j):
         if (self.je_veljavna({i,j}) == False) or (self.na_potezi == None):
+            if self.veljavne_poteze == {}:
+                self.stanje_igre = NEODLOCENO
+            else:
+                self.stanje_igre = NI_KONEC
             return None #neveljavna poteza
         else:
             (vrednost, k) = self.preveri_trojke({i,j})
             if vrednost == True:
+                self.stanje_igre = nasprotnik(self.na_potezi)
                 self.gui.koncaj_igro([{i,j},{j,k},{k,i}])
             else:
+                self.stanje_igre = NI_KONEC
                 if self.na_potezi == IGRALEC_MODER: #dodamo potezo igralcu v seznam
                     self.moder.append({i, j})
                 else:
@@ -132,8 +141,7 @@ class Racunalnik():
         self.gui = gui
 
     def igraj(self):
-        #TODO
-        pass
+        print('Jaz sem na vrsti, vendar me nisi se sprogramiral')
 
     def preveri_potezo(self):
         #TODO
@@ -211,6 +219,14 @@ class Gui():
     def zapri_okno(self, master):
         self.prekini_igralce()
         master.destroy()
+
+    def navodila(self):
+        window = tk.Toplevel(root)
+        string = '''Na igralnem polju so narisane pike. Igralca izmenjajoč povezujeta
+pike s črtami, vsak s svojo barvo. Cilj igre je nasprotnika prisiliti,
+da s svojo barvo tri pike poveže v trikotnik. Ko se to zgodi, je igre
+konec in igralec s trikotnikom v svoji barvi je igro izgubil.'''
+        tk.Label(window, text=string).pack()
 
     def zacni_igro(self, igralec_moder, igralec_rdec, napis):
         self.stanje='normal'
@@ -298,14 +314,6 @@ class Gui():
                 self.napis.set('Na potezi je rdeč igralec.')
             else: pass
 
-    def navodila(self):
-        window = tk.Toplevel(root)
-        string = '''Na igralnem polju so narisane pike. Igralca izmenjajoč povezujeta
-pike s črtami, vsak s svojo barvo. Cilj igre je nasprotnika prisiliti,
-da s svojo barvo tri pike poveže v trikotnik. Ko se to zgodi, je igre
-konec in igralec s trikotnikom v svoji barvi je igro izgubil.'''
-        tk.Label(window, text=string).pack()
-
     def pika_klik(self, event):
         if self.igra.na_potezi == IGRALEC_MODER:
             self.igralec_moder.klik(event)
@@ -330,9 +338,11 @@ konec in igralec s trikotnikom v svoji barvi je igro izgubil.'''
                 if igralec == IGRALEC_MODER:
                     self.barva = 'blue'
                     vrednost = 'Na potezi je rdeč igralec.'
+                    self.igralec_moder.igraj()
                 else:
                     self.barva = 'red'
                     vrednost = 'Na potezi je modri igralec.'
+                    self.igralec_rdec.igraj()
                 self.narisi_crto(self.barva)
                 self.napis.set(vrednost)
             else: pass
