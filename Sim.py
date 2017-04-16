@@ -1,4 +1,7 @@
 import tkinter as tk
+import threading
+import argparse
+import logging
 import math
 
 #################################################################################
@@ -20,15 +23,16 @@ def nasprotnik(igralec):
 
 class Igra():
     def __init__(self,gui):
-        self.gui=gui
+        self.gui = gui
         self.na_potezi = IGRALEC_MODER
         self.moder = []
         self.rdec = []
         self.stanje_igre = NI_KONEC
+        self.koncen_seznam = []
 
     def kopija(self):
-        #skopiramo celotno igro
-        kopija = Igra(self)
+        ''' Vrne kopijo celotne igre.'''
+        kopija = Igra(self.gui)
         kopija.na_potezi = self.na_potezi
         kopija.moder = self.moder
         kopija.rdec = self.rdec
@@ -41,11 +45,13 @@ class Igra():
             if self.rdec == []: pass
             else:
                 self.rdec.pop()
+##                print('odstranjam iz rdecega seznama')
                 self.na_potezi = nasprotnik(self.na_potezi)
         elif self.na_potezi == IGRALEC_RDEC:
             if self.moder == []: pass
             else:
                 self.moder.pop()
+##                print('odstranjam iz modrega seznama')
                 self.na_potezi = nasprotnik(self.na_potezi)
         else:pass
 
@@ -53,39 +59,53 @@ class Igra():
         #pogledamo, ce je poteza ze bila povlecena
         if (p in self.moder) or (p in self.rdec):
             return False
+        elif len(p) != 2:
+            return False
         else:
-            self.preveri_trojke(p)
             return True
 
     def veljavne_poteze(self):
         #pogledamo, katere poteze so se veljavne
-        poteze = {}
+        poteze = []
         for i in self.gui.seznam_pik:
             for j in self.gui.seznam_pik:
-                if self.je_veljavna({i,j}):
+                if (self.je_veljavna({i,j})) and ({i,j} not in poteze):
                     poteze.append({i,j})
         return poteze
 
     def povleci(self, i, j):
         if (self.je_veljavna({i,j}) == False) or (self.na_potezi == None):
-            if self.veljavne_poteze == {}:
+            self.moder.append({})
+            self.rdec.append({})
+            if self.veljavne_poteze == []:
                 self.stanje_igre = NEODLOCENO
-            else:
-                self.stanje_igre = NI_KONEC
-            return None #neveljavna poteza
+                self.koncen_seznam = []
+                self.na_potezi = None
+            return None
         else:
-            (vrednost, k) = self.preveri_trojke({i,j})
+            vrednost= self.preveri_trojke({i,j})
             if vrednost == True:
                 self.stanje_igre = nasprotnik(self.na_potezi)
-                self.gui.koncaj_igro([{i,j},{j,k},{k,i}])
+                self.moder.append({})
+                self.rdec.append({})
             else:
                 self.stanje_igre = NI_KONEC
                 if self.na_potezi == IGRALEC_MODER: #dodamo potezo igralcu v seznam
                     self.moder.append({i, j})
+##                    print('dodajam v moder seznam')
                 else:
                     self.rdec.append({i, j})
+##                    print('dodajam v rdec seznam')
                 self.na_potezi = nasprotnik(self.na_potezi) #spremenimo, kdo je na potezi
                 return True
+
+    def koncaj_igro(self):
+        [crta_1, crta_2, crta_3] = self.koncen_seznam
+        if self.na_potezi == IGRALEC_MODER:
+            self.moder.append(crta_1)
+        else:
+            self.rdec.append(crta_1)
+        self.na_potezi = None
 
     def mozni_trikotniki(self):
         TRIKOTNIKI = []
@@ -103,21 +123,20 @@ class Igra():
         vrednost = False
         i, j = list(p)[0], list(p)[1]
         if igralec == IGRALEC_MODER:
-            for k in self.gui.seznam_pik:
-                if ({i,k} in self.moder) and ({k,j} in self.moder):
-                    vrednost = True
-                    break
-                else: vrednost = False
+            seznam = self.moder
         else:
-            for k in self.gui.seznam_pik:
-                if ({i,k} in self.rdec) and ({k,j} in self.rdec):
-                    vrednost = True
-                    break
-                else: vrednost = False
-        return (vrednost, k)
+            seznam = self.rdec
+        for k in self.gui.seznam_pik:
+            if ({i,k} in seznam) and ({k,j} in seznam):
+                vrednost = True
+                self.koncen_seznam.append({i,j})
+                self.koncen_seznam.append({j,k})
+                self.koncen_seznam.append({k,i})
+                break
+        return vrednost
 
 
-#################################################################################
+############################################################################
 # Igralec človek
 
 class Clovek():
@@ -133,28 +152,144 @@ class Clovek():
     def klik(self, p):
         self.gui.povleci_potezo(p)
 
-#################################################################################
+############################################################################
 # Igralec računalnik
 
 class Racunalnik():
-    def __init__(self, gui):
+    def __init__(self, gui, algoritem):
         self.gui = gui
+        self.algoritem = algoritem #Algoritem, ki izračuna potezo
+        self.mislec = None #Vlakno, ki razmišlja
 
     def igraj(self):
-        print('Jaz sem na vrsti, vendar me nisi se sprogramiral')
+        """Igra potezo, ki jo vrne algoritem"""
+        self.mislec = threading.Thread(target=lambda : self.algoritem.izracunaj_potezo(self.gui.igra.kopija()))
+        self.mislec.start()
+        self.gui.plosca.after(100, self.preveri_potezo)
 
     def preveri_potezo(self):
-        #TODO
-        pass
+        if self.algoritem.poteza is not None:
+            self.gui.aktivne_pike.append(list(self.algoritem.poteza)[0])
+            self.gui.povleci_potezo(list(self.algoritem.poteza)[1])
+            self.mislec = None
+        else:
+            self.gui.plosca.after(100, self.preveri_potezo)
 
     def prekini(self):
-        #TODO
-        pass
+        if self.mislec:
+            logging.debug("Prekinjamo{0}".format(self.mislec))
+            self.algoritem.prekini()
+            self.mislec.join()
+            self.mislec = None
 
     def klik(self, p):
         pass
 
-#################################################################################
+############################################################################
+# Algoritem minimax
+
+MINIMAX_GLOBINA = 1
+
+class Minimax():
+    def __init__(self, globina):
+        self.globina = globina
+        self.prekinitev = False 
+        self.igra = None 
+        self.jaz = None 
+        self.poteza = None
+
+    def prekini(self):
+        self.prekinitev = True
+
+    def izracunaj_potezo(self, igra):
+        """Izračunaj potezo za trenutno stanje dane igre."""
+        self.igra = igra
+        self.prekinitev = False
+        self.jaz = self.igra.na_potezi
+        self.poteza = None
+        # Poženemo minimax
+        (poteza, vrednost) = self.minimax(self.globina, True)
+        self.jaz = None
+        self.igra = None
+        if not self.prekinitev:
+            # Potezo izvedemo v primeru, da nismo bili prekinjeni
+            logging.debug("minimax: poteza {0}, vrednost {1}".format(poteza, vrednost))
+            self.poteza = poteza
+
+    # Vrednosti igre
+    ZMAGA = 100000
+    NESKONCNO = ZMAGA + 1
+
+    def vrednost_pozicije(self):
+        """Ocena vrednosti pozicije: sešteje vrednosti vseh trojk na plošči."""
+        vrednost_trikotnika = {
+            (0,3) : Minimax.ZMAGA,
+            (3,0) : -Minimax.ZMAGA//10,
+            (0,2) : Minimax.ZMAGA//100,
+            (2,0) : -Minimax.ZMAGA//1000,
+            (0,1) : Minimax.ZMAGA//10000,
+            (1,0) : -Minimax.ZMAGA//100000
+        }
+        vrednost = 0
+        for t in self.igra.mozni_trikotniki():
+            x = 0
+            y = 0
+            for par in t:
+                if par in self.igra.moder:
+                    x += 1
+                elif par in self.igra.rdec:
+                    y += 1
+            vrednost += vrednost_trikotnika.get((x,y), 0)
+        return vrednost
+
+    def minimax(self, globina, maksimiziramo):
+        """Glavna metoda minimax."""
+        if self.prekinitev:
+            logging.debug ("Minimax prekinja, globina = {0}".format(globina))
+            return (None, 0)
+        zmagovalec = self.igra.stanje_igre
+        if zmagovalec in (IGRALEC_MODER, IGRALEC_RDEC, NEODLOCENO):
+            # Igre je konec, vrnemo njeno vrednost
+            if zmagovalec == self.jaz:
+                return (None, Minimax.ZMAGA)
+            elif zmagovalec == nasprotnik(self.jaz):
+                return (None, -Minimax.ZMAGA)
+            else:
+                assert False, "Konec igre brez zmagovalca."
+        elif zmagovalec == NI_KONEC:
+            if globina == 0:
+                return (None, self.vrednost_pozicije())
+            else:
+                # Naredimo eno stopnjo minimax
+                if maksimiziramo:
+                    najboljsa_poteza = None
+                    vrednost_najboljse = -Minimax.NESKONCNO
+                    for p in self.igra.veljavne_poteze():
+                        pika_1, pika_2 = list(p)[0], list(p)[1]
+                        self.igra.povleci(pika_1, pika_2)
+                        vrednost = self.minimax(globina-1, not maksimiziramo)[1]
+                        self.igra.razveljavi()
+                        if vrednost > vrednost_najboljse:
+                            vrednost_najboljse = vrednost
+                            najboljsa_poteza = p
+                else:
+                    # Minimiziramo
+                    najboljsa_poteza = None
+                    vrednost_najboljse = Minimax.NESKONCNO
+                    for p in self.igra.veljavne_poteze():
+                        pika_1, pika_2 = list(p)[0], list(p)[1]
+                        self.igra.povleci(pika_1, pika_2)
+                        vrednost = self.minimax(globina-1, not maksimiziramo)[1]
+                        self.igra.razveljavi()
+                        if vrednost < vrednost_najboljse:
+                            vrednost_najboljse = vrednost
+                            najboljsa_poteza = p
+                assert (najboljsa_poteza is not None), "minimax: izračunana poteza je None"
+                return (najboljsa_poteza, vrednost_najboljse)
+        else:
+            assert False, "minimax: nedefinirano stanje igre"
+            
+############################################################################
 # Uporabniski umesnik
 
 def sredisce(koord):
@@ -197,9 +332,9 @@ class Gui():
         menu_igralci = tk.Menu(menu)
         menu.add_cascade(label='Igralci', menu=menu_igralci)
         menu_igralci.add_command(label='Človek/Človek', command=lambda: self.zacni_igro(Clovek(self), Clovek(self), 'Na potezi je modri igralec.'))
-        menu_igralci.add_command(label='Človek/Računalnik', command=lambda: self.zacni_igro(Clovek(self), Racunalnik(self), 'Na potezi je modri igralec.'))
-        menu_igralci.add_command(label='Računalnik/Človek', command=lambda: self.zacni_igro(Racunalnik(self), Clovek(self), 'Na potezi je modri igralec.'))
-        menu_igralci.add_command(label='Računalnik/Računalnik', command=lambda: self.zacni_igro(Racunalnik(self), Racunalnik(self), 'Na potezi je modri igralec.'))
+        menu_igralci.add_command(label='Človek/Računalnik', command=lambda: self.zacni_igro(Clovek(self), Racunalnik(self, Minimax(MINIMAX_GLOBINA)), 'Na potezi je modri igralec.'))
+        menu_igralci.add_command(label='Računalnik/Človek', command=lambda: self.zacni_igro(Racunalnik(self, Minimax(MINIMAX_GLOBINA)), Clovek(self), 'Na potezi je modri igralec.'))
+        menu_igralci.add_command(label='Računalnik/Računalnik', command=lambda: self.zacni_igro(Racunalnik(self, Minimax(MINIMAX_GLOBINA)), Racunalnik(self, Minimax(MINIMAX_GLOBINA)), 'Na potezi je modri igralec.'))
         
         # Napis, ki prikazuje stanje igre
         self.napis = tk.StringVar(master, value='Dobrodošli! \n Na potezi je modri igralec.')
@@ -226,15 +361,19 @@ class Gui():
 pike s črtami, vsak s svojo barvo. Cilj igre je nasprotnika prisiliti,
 da s svojo barvo tri pike poveže v trikotnik. Ko se to zgodi, je igre
 konec in igralec s trikotnikom v svoji barvi je igro izgubil.'''
-        tk.Label(window, text=string).pack()
+        tk.Label(window, text=string, font=(14)).pack()
 
     def zacni_igro(self, igralec_moder, igralec_rdec, napis):
         self.stanje='normal'
         self.napis.set(napis)
         self.plosca.delete(Gui.TAG_CRTE)
+        self.seznam_crt = []
         self.barva = 'blue'
         self.prekini_igralce()
         self.igra = Igra(self)
+        for p in self.aktivne_pike:
+            self.plosca.itemconfig(p, fill='black')
+        self.aktivne_pike = []
         if (igralec_moder, igralec_rdec) == (None, None):
             self.igralec_moder = Clovek(self)
             self.igralec_rdec = Clovek(self)
@@ -243,23 +382,21 @@ konec in igralec s trikotnikom v svoji barvi je igro izgubil.'''
             self.igralec_rdec = igralec_rdec
         self.igralec_moder.igraj()
 
-    def koncaj_igro(self, sez):
-        [crta_1, crta_2, crta_3] = sez
-        if self.igra.na_potezi == IGRALEC_MODER:
-            barva = 'blue'
-            vrednost = 'Konec igre. \n Zmagal je rdeč igralec.'
-            self.igra.moder.append(crta_1)
-        else:
+    def koncaj_igro(self):
+        if len(self.igra.koncen_seznam) != 3:
+            assert False, 'nekje je slo nekaj narobe'
+        if self.igra.stanje_igre == IGRALEC_MODER:
             barva = 'red'
             vrednost = 'Konec igre. \n Zmagal je moder igralec.'
-            self.igra.rdec.append(crta_1)
-        self.narisi_trikotnik(sez, barva)
-        self.igra.na_potezi = None
+        else:
+            barva = 'blue'
+            vrednost = 'Konec igre. \n Zmagal je rdec igralec.'
+        self.narisi_trikotnik(barva)
         self.napis.set(vrednost)
         self.stanje='disabled'
         
-    def narisi_trikotnik(self, sez, barva):
-        [crta_1, crta_2, crta_3] = sez
+    def narisi_trikotnik(self, barva):
+        [crta_1, crta_2, crta_3] = self.igra.koncen_seznam
         prve_koord_0, prve_koord_1 = list(crta_1)[0], list(crta_1)[1]
         l1 = self.plosca.create_line(sredisce(self.plosca.coords(prve_koord_0))[0],sredisce(self.plosca.coords(prve_koord_0))[1],
                                     sredisce(self.plosca.coords(prve_koord_1))[0],sredisce(self.plosca.coords(prve_koord_1))[1],
@@ -315,47 +452,79 @@ konec in igralec s trikotnikom v svoji barvi je igro izgubil.'''
             else: pass
 
     def pika_klik(self, event):
-        if self.igra.na_potezi == IGRALEC_MODER:
-            self.igralec_moder.klik(event)
-        elif self.igra.na_potezi == IGRALEC_RDEC:
-            self.igralec_rdec.klik(event)        
-
-    def povleci_potezo(self, event):
-        igralec = self.igra.na_potezi
         for pika in self.seznam_pik:
             (x1, y1, x2, y2) = self.plosca.coords(pika)
             if (x1 <= event.x <= x2) and (y1 <= event.y <= y2):
-                if pika in self.aktivne_pike:
-                    self.plosca.itemconfig(pika, fill='black')
-                    self.aktivne_pike.remove(pika)
-                else:
-                    self.plosca.itemconfig(pika, fill='grey')
-                    self.aktivne_pike.append(pika)
-            else:
-                pass
+                if self.igra.na_potezi == IGRALEC_MODER:
+                    self.igralec_moder.klik(pika)
+                elif self.igra.na_potezi == IGRALEC_RDEC:
+                    self.igralec_rdec.klik(pika)
+                else:pass
+            else:pass
+
+    def povleci_potezo(self, p):
+        igralec = self.igra.na_potezi
+        if len(self.igra.moder + self.igra.rdec) != len(self.seznam_crt):
+            self.igra.moder = [x for x in self.igra.moder if x != {}]
+            self.igra.rdec = [x for x in self.igra.rdec if x != {}]
+            if len(self.igra.moder + self.igra.rdec) != len(self.seznam_crt):
+##                print(self.igra.moder)
+##                print(self.igra.rdec)
+##                print(self.seznam_crt)
+                assert False, 'neskladje crt v seznamih'
+        if p in self.aktivne_pike:
+            self.plosca.itemconfig(p, fill='black')
+            self.aktivne_pike.remove(p)
+        else:
+            self.plosca.itemconfig(p, fill='grey')
+            self.aktivne_pike.append(p)
         if len(self.aktivne_pike) == 2:
             if self.igra.povleci(self.aktivne_pike[0],self.aktivne_pike[1]) == True:
                 if igralec == IGRALEC_MODER:
                     self.barva = 'blue'
                     vrednost = 'Na potezi je rdeč igralec.'
-                    self.igralec_moder.igraj()
+                    self.igralec_rdec.igraj()
                 else:
                     self.barva = 'red'
                     vrednost = 'Na potezi je modri igralec.'
-                    self.igralec_rdec.igraj()
+                    self.igralec_moder.igraj()
                 self.narisi_crto(self.barva)
                 self.napis.set(vrednost)
             else: pass
             for pika in self.aktivne_pike: 
                 self.plosca.itemconfig(pika, fill='black')
             self.aktivne_pike = []
+        elif len(self.aktivne_pike) > 2:
+            assert False, 'napaka'
         else:
             pass
+        if (self.igra.stanje_igre == IGRALEC_MODER) or (self.igra.stanje_igre == IGRALEC_RDEC):
+            self.igra.koncaj_igro()
+            self.koncaj_igro()
 
-##############################################################################
+############################################################################
 # Glavni program
 
 if __name__ == "__main__":
+    # Opišemo argumente, ki jih sprejmemo iz ukazne vrstice
+    parser = argparse.ArgumentParser(description="Igrica Sim")
+    # Argument --globina n, s privzeto vrednostjo PRIVZETA_GLOBINA
+    parser.add_argument("--globina",
+                        default=MINIMAX_GLOBINA,
+                        type=int,
+                        help="globina iskanja za minimax algoritem")
+    # Argument --debug, ki vklopi sporočila o tem, kaj se dogaja
+    parser.add_argument("--debug",
+                        action="store_true",
+                        help="vklopi sporočila o dogajanju")
+
+    # Obdelamo argumente iz ukazne vrstice
+    args = parser.parse_args()
+
+    # Vklopimo sporočila, če je uporabnik podal --debug
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG)
+        
     root = tk.Tk()
     root.title("Sim")
 
