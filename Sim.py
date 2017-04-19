@@ -3,6 +3,7 @@ import threading
 import argparse
 import logging
 import math
+import random
 
 #################################################################################
 # Igra
@@ -45,13 +46,11 @@ class Igra():
             if self.rdec == []: pass
             else:
                 self.rdec.pop()
-##                print('odstranjam iz rdecega seznama')
                 self.na_potezi = nasprotnik(self.na_potezi)
         elif self.na_potezi == IGRALEC_RDEC:
             if self.moder == []: pass
             else:
                 self.moder.pop()
-##                print('odstranjam iz modrega seznama')
                 self.na_potezi = nasprotnik(self.na_potezi)
         else:pass
 
@@ -75,8 +74,6 @@ class Igra():
 
     def povleci(self, i, j):
         if (self.je_veljavna({i,j}) == False) or (self.na_potezi == None):
-            self.moder.append({})
-            self.rdec.append({})
             if self.veljavne_poteze == []:
                 self.stanje_igre = NEODLOCENO
                 self.koncen_seznam = []
@@ -86,18 +83,18 @@ class Igra():
             vrednost= self.preveri_trojke({i,j})
             if vrednost == True:
                 self.stanje_igre = nasprotnik(self.na_potezi)
-                self.moder.append({})
-                self.rdec.append({})
             else:
                 self.stanje_igre = NI_KONEC
-                if self.na_potezi == IGRALEC_MODER: #dodamo potezo igralcu v seznam
+
+            def dodaj_v_seznam(igralec):
+                if igralec == IGRALEC_MODER: #dodamo potezo igralcu v seznam
                     self.moder.append({i, j})
-##                    print('dodajam v moder seznam')
-                else:
+                elif igralec == IGRALEC_RDEC:
                     self.rdec.append({i, j})
-##                    print('dodajam v rdec seznam')
-                self.na_potezi = nasprotnik(self.na_potezi) #spremenimo, kdo je na potezi
-                return True
+
+            dodaj_v_seznam(self.na_potezi)
+            self.na_potezi = nasprotnik(self.na_potezi) #spremenimo, kdo je na potezi
+            return True
 
     def koncaj_igro(self):
         [crta_1, crta_2, crta_3] = self.koncen_seznam
@@ -188,7 +185,7 @@ class Racunalnik():
 ############################################################################
 # Algoritem minimax
 
-MINIMAX_GLOBINA = 1
+MINIMAX_GLOBINA = 2
 
 class Minimax():
     def __init__(self, globina):
@@ -264,27 +261,38 @@ class Minimax():
                 if maksimiziramo:
                     najboljsa_poteza = None
                     vrednost_najboljse = -Minimax.NESKONCNO
+                    najboljse_poteze = []
                     for p in self.igra.veljavne_poteze():
                         pika_1, pika_2 = list(p)[0], list(p)[1]
-                        self.igra.povleci(pika_1, pika_2)
-                        vrednost = self.minimax(globina-1, not maksimiziramo)[1]
-                        self.igra.razveljavi()
-                        if vrednost > vrednost_najboljse:
-                            vrednost_najboljse = vrednost
-                            najboljsa_poteza = p
+                        r = self.igra.povleci(pika_1, pika_2)
+                        if r == True:
+                            vrednost = self.minimax(globina-1, not maksimiziramo)[1]
+                            self.igra.razveljavi()
+                            if vrednost > vrednost_najboljse:
+                                vrednost_najboljse = vrednost
+                                najboljsa_poteza = p
+                                najboljse_poteze = [p]
+                            elif vrednost == vrednost_najboljse:
+                                najboljse_poteze.append(p)
                 else:
                     # Minimiziramo
                     najboljsa_poteza = None
                     vrednost_najboljse = Minimax.NESKONCNO
+                    najboljse_poteze = []
                     for p in self.igra.veljavne_poteze():
                         pika_1, pika_2 = list(p)[0], list(p)[1]
-                        self.igra.povleci(pika_1, pika_2)
-                        vrednost = self.minimax(globina-1, not maksimiziramo)[1]
-                        self.igra.razveljavi()
-                        if vrednost < vrednost_najboljse:
-                            vrednost_najboljse = vrednost
-                            najboljsa_poteza = p
+                        r = self.igra.povleci(pika_1, pika_2)
+                        if r == True:
+                            vrednost = self.minimax(globina-1, not maksimiziramo)[1]
+                            self.igra.razveljavi()
+                            if vrednost < vrednost_najboljse:
+                                vrednost_najboljse = vrednost
+                                najboljsa_poteza = p
+                                najboljse_poteze = [p]
+                            elif vrednost == vrednost_najboljse:
+                                najboljse_poteze.append(p)
                 assert (najboljsa_poteza is not None), "minimax: izračunana poteza je None"
+                najboljsa_poteza = random.choice(najboljse_poteze)
                 return (najboljsa_poteza, vrednost_najboljse)
         else:
             assert False, "minimax: nedefinirano stanje igre"
@@ -465,13 +473,7 @@ konec in igralec s trikotnikom v svoji barvi je igro izgubil.'''
     def povleci_potezo(self, p):
         igralec = self.igra.na_potezi
         if len(self.igra.moder + self.igra.rdec) != len(self.seznam_crt):
-            self.igra.moder = [x for x in self.igra.moder if x != {}]
-            self.igra.rdec = [x for x in self.igra.rdec if x != {}]
-            if len(self.igra.moder + self.igra.rdec) != len(self.seznam_crt):
-##                print(self.igra.moder)
-##                print(self.igra.rdec)
-##                print(self.seznam_crt)
-                assert False, 'neskladje crt v seznamih'
+            assert False, 'neskladje crt v seznamih'
         if p in self.aktivne_pike:
             self.plosca.itemconfig(p, fill='black')
             self.aktivne_pike.remove(p)
