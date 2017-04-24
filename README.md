@@ -11,5 +11,5 @@ Igro se igra na igralni plošči, na kateri je šest oglišč postavljenih v obl
 1. izdelava GUI  [22.3.2017]
 2. logika igre  [29.3.2017]
 3. igra med dvema človekoma  [5.4.2017]
-4. računalnik kot igralec  []
+4. računalnik kot igralec  [19.4.2017]
 5. testiranje in odprava napak  []
