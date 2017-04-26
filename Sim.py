@@ -185,7 +185,7 @@ class Racunalnik():
 ############################################################################
 # Algoritem minimax
 
-ALFABETA_GLOBINA = 3
+PRIVZETA_GLOBINA = 3
 
 class Minimax():
     def __init__(self, globina):
@@ -477,12 +477,12 @@ class Gui():
         menu_igralci.add_cascade(label='Računalnik/Človek', menu=podmenu2)
         menu_igralci.add_cascade(label='Računalnik/Računalnik', menu=podmenu3)
 
-        podmenu1.add_command(label='Minimax', command=lambda: self.zacni_igro(Clovek(self), Racunalnik(self, Minimax(ALFABETA_GLOBINA)), 'Na potezi je modri igralec.'))
-        podmenu1.add_command(label='Alfabeta', command=lambda: self.zacni_igro(Clovek(self), Racunalnik(self, Alfabeta(ALFABETA_GLOBINA)), 'Na potezi je modri igralec.'))
-        podmenu2.add_command(label='Minimax', command=lambda: self.zacni_igro(Racunalnik(self, Minimax(ALFABETA_GLOBINA)), Clovek(self), 'Na potezi je modri igralec.'))
-        podmenu2.add_command(label='Alfabeta', command=lambda: self.zacni_igro(Racunalnik(self, Alfabeta(ALFABETA_GLOBINA)), Clovek(self), 'Na potezi je modri igralec.'))
-        podmenu3.add_command(label='Minimax', command=lambda: self.zacni_igro(Racunalnik(self, Minimax(ALFABETA_GLOBINA)), Racunalnik(self, Minimax(ALFABETA_GLOBINA)), 'Na potezi je modri igralec.'))
-        podmenu3.add_command(label='Alfabeta', command=lambda: self.zacni_igro(Racunalnik(self, Alfabeta(ALFABETA_GLOBINA)), Racunalnik(self, Alfabeta(ALFABETA_GLOBINA)), 'Na potezi je modri igralec.'))
+        podmenu1.add_command(label='Minimax', command=lambda: self.zacni_igro(Clovek(self), Racunalnik(self, Minimax(PRIVZETA_GLOBINA)), 'Na potezi je modri igralec.'))
+        podmenu1.add_command(label='Alfabeta', command=lambda: self.zacni_igro(Clovek(self), Racunalnik(self, Alfabeta(PRIVZETA_GLOBINA)), 'Na potezi je modri igralec.'))
+        podmenu2.add_command(label='Minimax', command=lambda: self.zacni_igro(Racunalnik(self, Minimax(PRIVZETA_GLOBINA)), Clovek(self), 'Na potezi je modri igralec.'))
+        podmenu2.add_command(label='Alfabeta', command=lambda: self.zacni_igro(Racunalnik(self, Alfabeta(PRIVZETA_GLOBINA)), Clovek(self), 'Na potezi je modri igralec.'))
+        podmenu3.add_command(label='Minimax', command=lambda: self.zacni_igro(Racunalnik(self, Minimax(PRIVZETA_GLOBINA)), Racunalnik(self, Minimax(PRIVZETA_GLOBINA)), 'Na potezi je modri igralec.'))
+        podmenu3.add_command(label='Alfabeta', command=lambda: self.zacni_igro(Racunalnik(self, Alfabeta(PRIVZETA_GLOBINA)), Racunalnik(self, Alfabeta(PRIVZETA_GLOBINA)), 'Na potezi je modri igralec.'))
         
         # Napis, ki prikazuje stanje igre
         self.napis = tk.StringVar(master, value='Dobrodošli! \n Na potezi je modri igralec.')
@@ -652,7 +652,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Igrica Sim")
     # Argument --globina n, s privzeto vrednostjo PRIVZETA_GLOBINA
     parser.add_argument("--globina",
-                        default=ALFABETA_GLOBINA,
+                        default=PRIVZETA_GLOBINA,
                         type=int,
                         help="globina iskanja za minimax algoritem")
     # Argument --debug, ki vklopi sporočila o tem, kaj se dogaja
