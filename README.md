@@ -16,18 +16,25 @@ Igra Sim je igra za dva igralca. Igro se igra na igralni plošči, na kateri je 
 
 ## Opis programa
 V datoteki Sim.py je program, ki je sestavljen iz:
-* **Glavni program** program poskrbi, da se igra zažene.
-* **Igra** ima v sebi shranjeno logiko igre. Ta nazoruje potek igre, stanje na igralni plošči...
+* **Glavni program** program poskrbi, da se igra zažene.  
+
+* **Igra** ima v sebi shranjeno logiko igre. Ta nazoruje potek igre, stanje na igralni plošči...  
+
 BLA
-* **Igralec človek** se zažene, če je vsaj eden od igralcev človek.
+* **Igralec človek** se zažene, če je vsaj eden od igralcev človek.  
+
 Človek igra tako, da si na igralni plošči izbere dve piki, ki ju želi povezati. S klikom na piko, se ta obarva sivo, kar pomeni, da za potezo potrebujemo še eno piko. Če igralec ponovno klikne na isto piko, je poteza neveljavna in je ponovno na vrsti. Če s povlečeno potezo ni zadovoljen, jo lahko razveljavi s klikom na ukaz Razveljavi v meniju.
-* **Igralec računalnik** zažene, če je vsaj eden od igralcev računalnik.
+* **Igralec računalnik** zažene, če je vsaj eden od igralcev računalnik.  
+
 Računalnik igra s pomočjo izbranega algoritma. Vse klike na igralno ploščo, ki jih v času, ko je na potezi računalnik, naredi drugi igralec ignoriramo.
-* **Algoritem minimax** izračunava poteze, če je eden od igralcev računalnik.
+* **Algoritem minimax** izračunava poteze, če je eden od igralcev računalnik.  
+
 Algoritem minimax je nastavljen na globino (`PRIVZETA_GLOBINA`) 3. Uporabnik jo lahko skozi igro spreminja, a večja kot je, počasneje bo igral računalnik. Cenilka pregleda vse možne trikotnike, a upošteva le tiste, ki jih ima zasedene le en igralec s svojo bravo. Največ so vredni trikotniki, kjer sta možni še dve potezi, najmanj pa tisti, v katerem so že vse poteze povlečene. Algoritem si enakovredne poteze shranjuje v seznam in naključno potegne eno izmed teh potez (tako se izognemo monotonemu in predvidljivemu igranju računalnika).
-* **Algoritem alfabeta** izračunava poteze, če je eden od igralcev računalnik.
+* **Algoritem alfabeta** izračunava poteze, če je eden od igralcev računalnik.  
+
 Enako kot algoritem minimax.
-* **Uporabniški vmesnik** nam nariše igralno ploščo, menu, začne igro.
+* **Uporabniški vmesnik** nam nariše igralno ploščo, menu, začne igro.  
+
 Uporabniški vmesnik je sprogramiran s pomočjo Pythonove knjižnice TkInter. 
 Igralna plošča je na začetku nastavljena na velikost (`VELIKOST_POLJA`) 400x400 (sprogramirano je tudi aktivno prilagajanje velikosti igralne plošče, ki si jo igralec nastavlja med igranjem igre), na njej pa se nariše 6 pik (uporabnik lahko število poljubno prilagodi pri `ST_PIK`; smiselno število pik je vsaj 4, zgornje omejitve ni, a zaradi preglednosti priporočamo največ 18). Ob zagonu programa, sta kot nasprotnika nastavljena dva človeka. V glavnem meniju sta dva podmenija:
   * Igra, kjer si igralec lahko izbere ukaz:
