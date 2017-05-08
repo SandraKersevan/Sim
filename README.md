@@ -1,5 +1,5 @@
 # Sim
-projekt pri predmetu Programiranje 2
+projekt pri predmetu Programiranje 2 \n
 avtorici Sandra Kerševan in Sara Močnik
 
 Za projekt sva si izbrali igrico [Sim](https://en.wikipedia.org/wiki/Sim_(pencil_game)).
@@ -24,12 +24,12 @@ BLA
 * **Igralec računalnik** zažene, če je vsaj eden od igralcev računalnik.
 Računalnik igra s pomočjo izbranega algoritma. Vse klike na igralno ploščo, ki jih v času, ko je na potezi računalnik, naredi drugi igralec ignoriramo.
 * **Algoritem minimax** izračunava poteze, če je eden od igralcev računalnik.
-Algoritem minimax je nastavljen na globino (`code(PRIVZETA_GLOBINA)`) 3. Uporabnik jo lahko skozi igro spreminja, a večja kot je, počasneje bo igral računalnik. Cenilka pregleda vse možne trikotnike, a upošteva le tiste, ki jih ima zasedene le en igralec s svojo bravo. Največ so vredni trikotniki, kjer sta možni še dve potezi, najmanj pa tisti, v katerem so že vse poteze povlečene. Algoritem si enakovredne poteze shranjuje v seznam in naključno potegne eno izmed teh potez (tako se izognemo monotonemu in predvidljivemu igranju računalnika).
+Algoritem minimax je nastavljen na globino (`PRIVZETA_GLOBINA`) 3. Uporabnik jo lahko skozi igro spreminja, a večja kot je, počasneje bo igral računalnik. Cenilka pregleda vse možne trikotnike, a upošteva le tiste, ki jih ima zasedene le en igralec s svojo bravo. Največ so vredni trikotniki, kjer sta možni še dve potezi, najmanj pa tisti, v katerem so že vse poteze povlečene. Algoritem si enakovredne poteze shranjuje v seznam in naključno potegne eno izmed teh potez (tako se izognemo monotonemu in predvidljivemu igranju računalnika).
 * **Algoritem alfabeta** izračunava poteze, če je eden od igralcev računalnik.
 Enako kot algoritem minimax.
 * **Uporabniški vmesnik** nam nariše igralno ploščo, menu, začne igro.
 Uporabniški vmesnik je sprogramiran s pomočjo Pythonove knjižnice TkInter. 
-Igralna plošča je na začetku nastavljena na velikost (`code(VELIKOST_POLJA)`) 400x400 (sprogramirano je tudi aktivno prilagajanje velikosti igralne plošče, ki si jo igralec nastavlja med igranjem igre), na njej pa se nariše 6 pik (uporabnik lahko število poljubno prilagodi pri `code(ST_PIK)`; smiselno število pik je vsaj 4, zgornje omejitve ni, a zaradi preglednosti priporočamo največ 18). Ob zagonu programa, sta kot nasprotnika nastavljena dva človeka. V glavnem meniju sta dva podmenija:
+Igralna plošča je na začetku nastavljena na velikost (`VELIKOST_POLJA`) 400x400 (sprogramirano je tudi aktivno prilagajanje velikosti igralne plošče, ki si jo igralec nastavlja med igranjem igre), na njej pa se nariše 6 pik (uporabnik lahko število poljubno prilagodi pri `ST_PIK`; smiselno število pik je vsaj 4, zgornje omejitve ni, a zaradi preglednosti priporočamo največ 18). Ob zagonu programa, sta kot nasprotnika nastavljena dva človeka. V glavnem meniju sta dva podmenija:
   * Igra, kjer si igralec lahko izbere ukaz:
     * nova igra, ki začne novo igro z dvema človekoma,
     * razveljavi, ki razveljavi potezo igralca, a le, če ta poteza ni pomenila konec igre,
