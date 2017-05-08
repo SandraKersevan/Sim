@@ -1,5 +1,5 @@
 # Sim
-projekt pri predmetu Programiranje 2 \n
+projekt pri predmetu Programiranje 2  
 avtorici Sandra Kerševan in Sara Močnik
 
 Za projekt sva si izbrali igrico [Sim](https://en.wikipedia.org/wiki/Sim_(pencil_game)).
