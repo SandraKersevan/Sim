@@ -1,4 +1,3 @@
-
 import tkinter as tk
 import threading
 import argparse
@@ -30,7 +29,7 @@ class Igra():
         self.moder = [] # seznam opravljenih potez modrega igralca
         self.rdec = [] # seznam opravljenih potez rdečega igralca
         self.stanje_igre = NI_KONEC
-        self.koncen_seznam = [] # seznam zadnjega trikotnika
+        self.zadnji_trikotnik = [] # seznam črt v zadnjem trikotniku
 
     def kopija(self):
         ''' Vrne kopijo celotne igre.'''
@@ -42,6 +41,7 @@ class Igra():
         return kopija
 
     def razveljavi(self):
+        ''' Razveljavi zadnjo potezo, če ta ne pomeni konec igre.'''
         #iz seznama igralca, ki je zadnji igral, odstranimo zadnjo potezo in spremenimo, kdo je na vrsti za igrati
         if self.na_potezi == IGRALEC_MODER:
             if self.rdec == []: pass
@@ -65,20 +65,22 @@ class Igra():
             return True
 
     def veljavne_poteze(self):
+        ''' Vrne seznam še veljavnih potez.'''
         #pogledamo, katere poteze so še veljavne
         poteze = []
-        for i in self.gui.seznam_pik:
-            for j in self.gui.seznam_pik:
+        for i in self.gui.pike:
+            for j in self.gui.pike:
                 if (self.je_veljavna({i,j})) and ({i,j} not in poteze):
                     poteze.append({i,j})
         return poteze
 
     def povleci(self, i, j):
+        ''' Povleče potezo in jo doda v seznam potez ustreznega igralca.'''
         # neveljavna poteza
         if (self.je_veljavna({i,j}) == False) or (self.na_potezi == None):
             if self.veljavne_poteze == []:
                 self.stanje_igre = NEODLOCENO
-                self.koncen_seznam = []
+                self.zadnji_trikotnik = []
                 self.na_potezi = None
             return None
 
@@ -102,7 +104,7 @@ class Igra():
             return True
 
     def koncaj_igro(self):
-        [crta_1, crta_2, crta_3] = self.koncen_seznam # zadnja trojka za trikotnik
+        [crta_1, crta_2, crta_3] = self.zadnji_trikotnik # zadnja trojka za trikotnik
         if self.na_potezi == IGRALEC_MODER:
             self.moder.append(crta_1)
         else:
@@ -110,15 +112,16 @@ class Igra():
         self.na_potezi = None
 
     def mozni_trikotniki(self):
-        TRIKOTNIKI = []
+        ''' Vrne seznam vseh možnih trikotnikov v igri.'''
+        vsi_trikotniki = []
         # zgeneriramo vse možne trikotnike
-        for i in self.gui.seznam_pik:
-            for j in self.gui.seznam_pik:
-                for k in self.gui.seznam_pik:
+        for i in self.gui.pike:
+            for j in self.gui.pike:
+                for k in self.gui.pike:
                     if (i != j) and (i!=k) and (j!=k):
-                        TRIKOTNIKI.append([{i,j},{i,k},{j,k}])
+                        vsi_trikotniki.append([{i,j},{i,k},{j,k}])
                     else: pass
-        return TRIKOTNIKI
+        return vsi_trikotniki
 
     def preveri_trojke(self, p):
         ''' Preverimo, ali je igralec narisal trikotnik.'''
@@ -126,15 +129,15 @@ class Igra():
         vrednost = False
         i, j = list(p)[0], list(p)[1] # trojka, ki vsebuje ti dve piki
         if igralec == IGRALEC_MODER:
-            seznam = self.moder
+            poteze_igralca = self.moder
         else:
-            seznam = self.rdec
-        for k in self.gui.seznam_pik:
-            if ({i,k} in seznam) and ({k,j} in seznam): # imamo trojko
+            poteze_igralca = self.rdec
+        for k in self.gui.pike:
+            if ({i,k} in poteze_igralca) and ({k,j} in poteze_igralca): # imamo trojko
                 vrednost = True
-                self.koncen_seznam.append({i,j})
-                self.koncen_seznam.append({j,k})
-                self.koncen_seznam.append({k,i})
+                self.zadnji_trikotnik.append({i,j})
+                self.zadnji_trikotnik.append({j,k})
+                self.zadnji_trikotnik.append({k,i})
                 break
         return vrednost
 
@@ -326,12 +329,12 @@ class Alfabeta():
     def vrednost_pozicije(self):
         """Ocena vrednosti pozicije: sešteje vrednosti vseh trojk na plošči."""
         vrednost_trikotnika = {
-            (0,3) : Minimax.ZMAGA,
-            (3,0) : -Minimax.ZMAGA//10,
-            (0,2) : Minimax.ZMAGA//100,
-            (2,0) : -Minimax.ZMAGA//1000,
-            (0,1) : Minimax.ZMAGA//10000,
-            (1,0) : -Minimax.ZMAGA//100000
+            (0,3) : Alfabeta.ZMAGA,
+            (3,0) : -Alfabeta.ZMAGA//10,
+            (0,2) : Alfabeta.ZMAGA//100,
+            (2,0) : -Alfabeta.ZMAGA//1000,
+            (0,1) : Alfabeta.ZMAGA//10000,
+            (1,0) : -Alfabeta.ZMAGA//100000
         }
         vrednost = 0
         for t in self.igra.mozni_trikotniki():
@@ -451,9 +454,9 @@ class Gui():
         self.igralec_moder = None
         self.igralec_rdec = None
         self.igra = None
-        self.seznam_pik = [] # seznam id-jev pik
+        self.pike = [] # seznam id-jev pik
         self.aktivne_pike = [] # seznam označenih pik (dolžina 1 ali 2)
-        self.seznam_crt = [] # seznam črt oblike [prva povezana pika, druga povezana pike, id črte]
+        self.crte = [] # seznam črt oblike [prva povezana pika, druga povezana pike, id črte]
         self.stanje = 'normal' # potrebujemo za ukaz razveljavi
         
         master.protocol("WM_DELETE_WINDOW", lambda: self.zapri_okno(master))
@@ -525,7 +528,7 @@ konec in igralec s trikotnikom v svoji barvi je igro izgubil.'''
         self.stanje='normal'
         self.napis.set(napis)
         self.plosca.delete(Gui.TAG_CRTE)
-        self.seznam_crt = []
+        self.crte = []
         self.barva = 'blue'
         self.prekini_igralce()
         self.igra = Igra(self)
@@ -544,7 +547,7 @@ konec in igralec s trikotnikom v svoji barvi je igro izgubil.'''
 
     def koncaj_igro(self):
         # Ulovimo napako
-        if len(self.igra.koncen_seznam) != 3:
+        if len(self.igra.zadnji_trikotnik) != 3:
             assert False, 'nekje je slo nekaj narobe'
         # Nastavimo končno stanje
         if self.igra.stanje_igre == IGRALEC_MODER:
@@ -560,27 +563,27 @@ konec in igralec s trikotnikom v svoji barvi je igro izgubil.'''
     def narisi_trikotnik(self, barva):
         ''' Funkcija nariše končen trikotnik, ki pomeni konec igre.'''
         # Poberemo informacije iz igre o črtah in pikah
-        [crta_1, crta_2, crta_3] = self.igra.koncen_seznam
+        [crta_1, crta_2, crta_3] = self.igra.zadnji_trikotnik
         prve_koord_0, prve_koord_1 = list(crta_1)[0], list(crta_1)[1]
         l1 = self.plosca.create_line(sredisce(self.plosca.coords(prve_koord_0))[0],sredisce(self.plosca.coords(prve_koord_0))[1],
                                     sredisce(self.plosca.coords(prve_koord_1))[0],sredisce(self.plosca.coords(prve_koord_1))[1],
-                                    fill=barva, tag=Gui.TAG_CRTE, width = 10)
+                                    fill=barva, tag=Gui.TAG_CRTE, width = 10) # črto odebelimo in pobarvamo s pravo barvo
         self.plosca.tag_lower(l1)
-        self.seznam_crt.append([prve_koord_0, prve_koord_1, l1])
+        self.crte.append([prve_koord_0, prve_koord_1, l1])
         
         druge_koord_0, druge_koord_1 = list(crta_2)[0], list(crta_2)[1]
         l2 = self.plosca.create_line(sredisce(self.plosca.coords(druge_koord_0))[0],sredisce(self.plosca.coords(druge_koord_0))[1],
                                     sredisce(self.plosca.coords(druge_koord_1))[0],sredisce(self.plosca.coords(druge_koord_1))[1],
-                                    fill=barva, tag=Gui.TAG_CRTE, width = 10)
+                                    fill=barva, tag=Gui.TAG_CRTE, width = 10) # črto odebelimo in pobarvamo s pravo barvo
         self.plosca.tag_lower(l2)
-        self.seznam_crt.append([druge_koord_0, druge_koord_1, l2])
+        self.crte.append([druge_koord_0, druge_koord_1, l2])
         
         tretje_koord_0, tretje_koord_1 = list(crta_3)[0], list(crta_3)[1]
         l3 = self.plosca.create_line(sredisce(self.plosca.coords(tretje_koord_0))[0],sredisce(self.plosca.coords(tretje_koord_0))[1],
                                     sredisce(self.plosca.coords(tretje_koord_1))[0],sredisce(self.plosca.coords(tretje_koord_1))[1],
-                                    fill=barva, tag=Gui.TAG_CRTE, width = 10)
+                                    fill=barva, tag=Gui.TAG_CRTE, width = 10) # črto odebelimo in pobarvamo s pravo barvo
         self.plosca.tag_lower(l3)
-        self.seznam_crt.append([tretje_koord_0, tretje_koord_1, l3])
+        self.crte.append([tretje_koord_0, tretje_koord_1, l3])
 
     def prekini_igralce(self):
         # Vlakno, ki prekine igralce
@@ -598,8 +601,8 @@ konec in igralec s trikotnikom v svoji barvi je igro izgubil.'''
                                     Gui.VELIKOST_POLJA / 2 + ((Gui.VELIKOST_POLJA / 2) - 50) * math.cos(2*i*math.pi/Gui.ST_PIK) - 10,
                                     Gui.VELIKOST_POLJA / 2 + ((Gui.VELIKOST_POLJA / 2) - 50) * math.sin(2*i*math.pi/Gui.ST_PIK) - 10,
                                     fill='black', tag=Gui.TAG_PIKE)
-            self.seznam_pik.append(p) # id-je pik si shranimo v seznam
-        for p in self.seznam_pik: # piko narišemo nad črto
+            self.pike.append(p) # id-je pik si shranimo v seznam
+        for p in self.pike: # piko narišemo nad črto
             self.plosca.tag_raise(p)
 
     def on_resize(self,event):
@@ -612,7 +615,7 @@ konec in igralec s trikotnikom v svoji barvi je igro izgubil.'''
 
         # Prilagodimo pike - spremenimo koordinate
         i = 0
-        for pika in self.seznam_pik:
+        for pika in self.pike:
             sredisce_pike = sredisce(self.plosca.coords(pika))
             sredisce_tocke = sredisce((sredisce_plosce[0] + polmer * math.cos(2*i*math.pi/Gui.ST_PIK) + 10,
                                     sredisce_plosce[1] + polmer * math.sin(2*i*math.pi/Gui.ST_PIK) + 10,
@@ -625,7 +628,7 @@ konec in igralec s trikotnikom v svoji barvi je igro izgubil.'''
             i += 1
 
         # Prilagodimo črte - spremenimo koordinate
-        for crta in self.seznam_crt:
+        for crta in self.crte:
             [pika_1, pika_2, id_crte] = crta
             (x0, y0) = sredisce(self.plosca.coords(pika_1))
             (x1, y1) = sredisce(self.plosca.coords(pika_2))
@@ -640,16 +643,16 @@ konec in igralec s trikotnikom v svoji barvi je igro izgubil.'''
         l = self.plosca.create_line(sredisceX_1, sredisceY_1, sredisceX_2, sredisceY_2,
                                 fill=barva, tag=Gui.TAG_CRTE, width = 5)
         self.plosca.tag_lower(l)
-        self.seznam_crt.append([pika_1, pika_2, l]) # dodamo črto v seznam
+        self.crte.append([pika_1, pika_2, l]) # dodamo črto v seznam
  
     def razveljavi(self):
         ''' Funkcija razveljavi zadnjo potezo.'''
         if self.stanje == 'disabled': pass # konec igre
-        elif self.seznam_crt == []: pass # nimamo nobene poteze
+        elif self.crte == []: pass # nimamo nobene poteze
         else:
             self.igra.razveljavi()
-            self.plosca.delete(self.seznam_crt[-1][-1])
-            self.seznam_crt.pop()
+            self.plosca.delete(self.crte[-1][-1])
+            self.crte.pop()
             # sprememba napisa
             if self.igra.na_potezi == IGRALEC_MODER:
                 self.napis.set('Na potezi je modri igralec.')
@@ -659,7 +662,7 @@ konec in igralec s trikotnikom v svoji barvi je igro izgubil.'''
 
     def pika_klik(self, event):
         # zgodil se je klik na piko
-        for pika in self.seznam_pik:
+        for pika in self.pike:
             (x1, y1, x2, y2) = self.plosca.coords(pika)
             if (x1 <= event.x <= x2) and (y1 <= event.y <= y2):
                 if self.igra.na_potezi == IGRALEC_MODER:
@@ -671,7 +674,7 @@ konec in igralec s trikotnikom v svoji barvi je igro izgubil.'''
 
     def povleci_potezo(self, p):
         igralec = self.igra.na_potezi
-        if len(self.igra.moder + self.igra.rdec) != len(self.seznam_crt): # ulovimo napako
+        if len(self.igra.moder + self.igra.rdec) != len(self.crte): # ulovimo napako
             assert False, 'neskladje crt v seznamih'
         if p in self.aktivne_pike: # dvakrat klik na isto piko
             self.plosca.itemconfig(p, fill='black')
