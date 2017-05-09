@@ -23,7 +23,6 @@ V datoteki Sim.py je program, ki je sestavljen iz:
 ⋅⋅⋅Trenutno stanje na plošči shranjeno v seznamih moder in rdec. To je seznam dvoelementnih množic (elementa v množici sta povezani piki igralca modre oz. rdeče barve). Za preverjanje veljavnosti poteze in shranjevanje poteze poskrbi metoda `povleci`...
 
 * **Igralec človek** se zažene, če je vsaj eden od igralcev človek.  
-
 ⋅⋅⋅Človek igra tako, da si na igralni plošči izbere dve piki, ki ju želi povezati. S klikom na piko, se ta obarva sivo, kar pomeni, da za potezo potrebujemo še eno piko. Če igralec ponovno klikne na isto piko, je poteza neveljavna in je ponovno na vrsti. Če s povlečeno potezo ni zadovoljen, jo lahko razveljavi s klikom na ukaz Razveljavi v meniju.
 
 * **Igralec računalnik** zažene, če je vsaj eden od igralcev računalnik.  
