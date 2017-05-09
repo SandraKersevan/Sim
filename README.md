@@ -1,6 +1,6 @@
 # Sim
-projekt pri predmetu Programiranje 2  
-avtorici Sandra Kerševan in Sara Močnik
+projekna naloga pri predmetu Programiranje 2  
+avtorici: Sandra Kerševan in Sara Močnik
 
 Za projekt sva si izbrali igrico [Sim](https://en.wikipedia.org/wiki/Sim_(pencil_game)).
 
@@ -15,7 +15,8 @@ Za projekt sva si izbrali igrico [Sim](https://en.wikipedia.org/wiki/Sim_(pencil
 Igra Sim je igra za dva igralca. Igro se igra na igralni plošči, na kateri je šest oglišč postavljenih v obliko šestkotnika. Igralca izmenično vsak s svojo barvo povezujeta po dve različni, še ne povezani oglišči. Cilj igre je prisiliti nasprotnika, da tri oglišča s svojo barvo poveže v trikotnik. Igralec, ki prvi povleče trikotnik, je izgubil igro.
 
 ## Opis programa
-V datoteki Sim.py je program, ki je sestavljen iz:
+V datoteki Sim.py je program, ki je sestavljen iz:  
+
 * **Glavni program** program poskrbi, da se igra zažene.  
 
 * **Igra** ima v sebi shranjeno logiko igre. Ta nazoruje potek igre, stanje na igralni plošči...  
