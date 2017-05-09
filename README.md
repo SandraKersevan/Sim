@@ -10,6 +10,7 @@ Za projekt sva si izbrali igrico [Sim](https://en.wikipedia.org/wiki/Sim_(pencil
 3. igra med dvema človekoma  [5.4.2017]
 4. računalnik kot igralec  [19.4.2017]
 5. testiranje in odprava napak  [26.4.2017]
+6. čiščenje kode in oddaja [9.5.2017]
 
 ## Opis igre
 Igra Sim je igra za dva igralca. Igro se igra na igralni plošči, na kateri je šest oglišč postavljenih v obliko šestkotnika. Igralca izmenično vsak s svojo barvo povezujeta po dve različni, še ne povezani oglišči. Cilj igre je prisiliti nasprotnika, da tri oglišča s svojo barvo poveže v trikotnik. Igralec, ki prvi povleče trikotnik, je izgubil igro.
