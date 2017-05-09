@@ -43,5 +43,5 @@ Igralna plošča je na začetku nastavljena na velikost (`VELIKOST_POLJA`) 400x4
      * razveljavi, ki razveljavi potezo igralca, a le, če ta poteza ni pomenila konec igre,
      * navodila, ki igralcu izpiše navodila igre in
      * zapri, ki ugasne program.
-   * Igralec, kjer si izberemo možnost nasprotnika in algoritem, po katerem bo igral računalnik, če je ta eden od igralcev.
+   * Igralec, kjer si izberemo možnost nasprotnika in algoritem, po katerem bo igral računalnik, če je ta eden od igralcev.  
 Vsi objekti na igralni plošči so shranjeni: id-ji pik so shranjeni v seznamu `pike`, črte pa so shranjene v seznamu `crte` v obliki [prva povezana pika, druga povezana pika, id črte]. Metoda `zacni_igro` nam nastavi začetno stanje igre, torej pobriše vse črte in pusti le pike, metoda `koncaj_igro` pa nam nastavi končno stanje, odebeli trikotnik poraženca in konča igro. Metoda `povleci_potezo` nam na igralno ploščo nariše potezo igralca. Ko igralec klikne na prvo piko, se ta obarva sivo, ko klikne še drugo, se med njima ustvari črta v igralčevi barvi. Če igralec dvakrat klikne isto piko, je to neveljavna poteza in je ponovno na vrsti.
